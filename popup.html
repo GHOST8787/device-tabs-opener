@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>裝置分頁批次開啟器</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 340px;
+      min-height: 120px;
+      max-height: 500px;
+      font-family: -apple-system, "Microsoft JhengHei", sans-serif;
+      background: #1a1a2e;
+      color: #e0e0e0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #16213e, #0f3460);
+      padding: 12px 16px;
+      border-bottom: 1px solid #2a2a4a;
+      flex-shrink: 0;
+    }
+    .header-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .header-sub {
+      font-size: 11px;
+      color: #8888aa;
+      margin-top: 2px;
+    }
+
+    #content {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* 裝置卡片 */
+    .device-card {
+      border-bottom: 1px solid #2a2a4a;
+    }
+    .device-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      background: #0f1a2e;
+      cursor: default;
+    }
+    .device-icon { font-size: 18px; }
+    .device-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #aabbdd;
+      flex: 1;
+    }
+    .device-count {
+      font-size: 11px;
+      color: #8888aa;
+      background: #2a2a4a;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+    .device-open-btn {
+      padding: 5px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: inherit;
+      font-weight: 500;
+      cursor: pointer;
+      background: linear-gradient(135deg, #533483, #7b2d8b);
+      color: white;
+      transition: all 0.2s;
+    }
+    .device-open-btn:hover {
+      background: linear-gradient(135deg, #6a3fa0, #9a3aad);
+      transform: translateY(-1px);
+    }
+    .device-open-btn:disabled {
+      background: #333355;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .device-open-btn.success {
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+    }
+
+    /* 分頁預覽列表 */
+    .tab-preview {
+      padding: 0 16px 8px 44px;
+      background: #0f1a2e;
+    }
+    .tab-preview-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 0;
+      font-size: 11px;
+      color: #7788aa;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tab-preview-item img {
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .tab-preview-more {
+      font-size: 10px;
+      color: #556688;
+      padding: 2px 0 4px 0;
+    }
+
+    /* 全部開啟 */
+    .open-all {
+      padding: 10px 16px;
+      border-top: 1px solid #2a2a4a;
+      flex-shrink: 0;
+      background: #16213e;
+    }
+    .open-all-btn {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, #e74c3c, #c0392b);
+      color: white;
+      transition: all 0.2s;
+    }
+    .open-all-btn:hover {
+      background: linear-gradient(135deg, #ff5c4d, #e74c3c);
+      transform: translateY(-1px);
+    }
+    .open-all-btn:disabled {
+      background: #333355;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .open-all-btn.success {
+      background: linear-gradient(135deg, #27ae60, #2ecc71);
+    }
+
+    /* 空狀態 */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px 20px;
+      text-align: center;
+      color: #555577;
+    }
+    .empty-icon { font-size: 36px; margin-bottom: 10px; opacity: 0.6; }
+    .empty-title { font-size: 13px; color: #7777aa; margin-bottom: 6px; }
+    .empty-desc { font-size: 11px; color: #555577; line-height: 1.6; }
+
+    /* 載入中 */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+      gap: 10px;
+      color: #7777aa;
+      font-size: 13px;
+    }
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid #2a2a4a;
+      border-top-color: #7b2d8b;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: #1a1a2e; }
+    ::-webkit-scrollbar-thumb { background: #3a3a5a; border-radius: 2px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-title">📱 裝置分頁批次開啟器</div>
+    <div class="header-sub">選擇裝置，一鍵開啟所有分頁</div>
+  </div>
+
+  <div id="content">
+    <div class="loading">
+      <div class="spinner"></div>
+      讀取中...
+    </div>
+  </div>
+
+  <div class="open-all" id="openAllSection" style="display:none;">
+    <button class="open-all-btn" id="btnOpenAll">🚀 開啟全部裝置的分頁</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
