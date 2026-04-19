@@ -1,8 +1,15 @@
 # 📱 裝置分頁批次開啟器 / Device Tabs Opener
 
+[![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-install-4285F4?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/idmlpeiehifpmfbgpefcdjlbdchjmjpc)
+[![GitHub](https://img.shields.io/badge/GitHub-source-181717?logo=github)](https://github.com/GHOST8787/device-tabs-opener)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Version](https://img.shields.io/badge/version-2.1.0-blue)](https://github.com/GHOST8787/device-tabs-opener)
+
 一鍵批次開啟 iPhone / iPad 同步到 Chrome 的所有分頁。
 
 A Chrome extension to batch-open tabs synced from your iPhone / iPad.
+
+🔗 **[前往 Chrome 線上應用程式商店安裝 / Install from Chrome Web Store](https://chromewebstore.google.com/detail/idmlpeiehifpmfbgpefcdjlbdchjmjpc)**
 
 ---
 
@@ -17,11 +24,14 @@ A Chrome extension to batch-open tabs synced from your iPhone / iPad.
 
 ## 📥 安裝方式 / Installation
 
-### 方法一：從 Chrome 線上應用程式商店安裝（推薦）
+### 方法一：從 Chrome 線上應用程式商店安裝（推薦 / Recommended）
 
-> 🔗 即將上架 / Coming soon
+👉 **[裝置分頁批次開啟器 — Chrome Web Store](https://chromewebstore.google.com/detail/idmlpeiehifpmfbgpefcdjlbdchjmjpc)**
 
-### 方法二：手動安裝（開發者模式）
+點擊「加到 Chrome」即可安裝，無需開發者模式。
+Click "Add to Chrome" to install directly — no developer mode required.
+
+### 方法二：手動安裝（開發者模式 / Developer Mode）
 
 1. 下載或 clone 此專案
 2. 開啟 Chrome，前往 `chrome://extensions`
