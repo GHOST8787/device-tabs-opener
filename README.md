@@ -1,5 +1,7 @@
 # 裝置分頁批次開啟器
 
+> 📅 專案開始：2026-03
+
 [![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-install-4285F4?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/idmlpeiehifpmfbgpefcdjlbdchjmjpc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-2.1.0-blue)](https://github.com/GHOST8787/device-tabs-opener)
