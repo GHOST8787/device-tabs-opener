@@ -1,0 +1,105 @@
+{
+  "extName": {
+    "message": "裝置分頁批次開啟器",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "一鍵勾選並批次開啟 iPhone / iPad 同步的分頁",
+    "description": "Extension description"
+  },
+  "headerEyebrow": {
+    "message": "CHROME EXTENSION"
+  },
+  "headerTitle": {
+    "message": "裝置分頁"
+  },
+  "devicesLabel": {
+    "message": "裝置"
+  },
+  "tabs": {
+    "message": "個分頁"
+  },
+  "tabsSingular": {
+    "message": "個分頁"
+  },
+  "selectAll": {
+    "message": "全選"
+  },
+  "deselectAll": {
+    "message": "取消"
+  },
+  "openSelectedPrefix": {
+    "message": "開啟選取的"
+  },
+  "openSelectedSuffix": {
+    "message": "個分頁"
+  },
+  "openNone": {
+    "message": "請先勾選分頁"
+  },
+  "openInProgress": {
+    "message": "開啟中"
+  },
+  "openSuccess": {
+    "message": "已開啟"
+  },
+  "openFail": {
+    "message": "失敗,請重試"
+  },
+  "syncTime": {
+    "message": "$TIME$ 前同步",
+    "placeholders": {
+      "time": {
+        "content": "$1"
+      }
+    }
+  },
+  "syncTimeMinutes": {
+    "message": "$N$ 分鐘",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "syncTimeHours": {
+    "message": "$N$ 小時",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "syncTimeDays": {
+    "message": "$N$ 天",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "syncTimeJustNow": {
+    "message": "剛才"
+  },
+  "emptyTitle": {
+    "message": "找不到裝置同步分頁"
+  },
+  "emptyDescLine1": {
+    "message": "請確認下列三件事:"
+  },
+  "emptyDescLine2": {
+    "message": "1. 已登入 Google 帳號"
+  },
+  "emptyDescLine3": {
+    "message": "2. 手機 / 平板 Chrome 已開啟同步"
+  },
+  "emptyDescLine4": {
+    "message": "3. 裝置上目前有開啟的分頁"
+  },
+  "errorTitle": {
+    "message": "讀取失敗"
+  },
+  "loading": {
+    "message": "讀取中"
+  }
+}

@@ -25,3 +25,9 @@ package-lock.json
 *.zip
 *.crx
 *.pem
+
+# Local-only assets
+icons/_backup_v2.1.0/
+promo_*.png
+screenshot_*.png
+

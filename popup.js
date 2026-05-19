@@ -1,168 +1,370 @@
-// popup.js
+// popup.js — v2.2.0
 
-const content = document.getElementById('content');
-const openAllSection = document.getElementById('openAllSection');
-const btnOpenAll = document.getElementById('btnOpenAll');
+const content = document.getElementById("content");
+const footer = document.getElementById("footer");
+const btnOpen = document.getElementById("btnOpen");
+const btnLabel = document.getElementById("btnLabel");
+const langToggle = document.getElementById("langToggle");
 
-let allDevices = [];
+// Devices snapshot. Each tab gets an `_id` for selection tracking.
+let devices = [];
+const selected = new Set();
 
-document.addEventListener('DOMContentLoaded', loadDevices);
+// Language override stored in chrome.storage.local — overrides browser default.
+// Values: "zh_TW" | "en" | null (use browser default).
+let langOverride = null;
+let messages = {};
+
+// ---------- i18n helpers ----------
+
+// Built-in messages for the override path. Mirror _locales/<lang>/messages.json.
+const MESSAGES = {
+  zh_TW: {
+    headerEyebrow: "CHROME EXTENSION",
+    headerTitle: "裝置分頁",
+    devicesLabel: "裝置",
+    tabs: "個分頁",
+    selectAll: "全選",
+    deselectAll: "取消",
+    openSelectedPrefix: "開啟選取的",
+    openSelectedSuffix: "個分頁",
+    openInProgress: "開啟中",
+    openSuccess: "已開啟",
+    openFail: "失敗,請重試",
+    syncTimeMinutes: (n) => `${n} 分鐘`,
+    syncTimeHours: (n) => `${n} 小時`,
+    syncTimeDays: (n) => `${n} 天`,
+    syncTimeJustNow: "剛才",
+    syncTimePattern: (time) => `${time}前同步`,
+    emptyTitle: "找不到裝置同步分頁",
+    emptyDescLine1: "請確認下列三件事:",
+    emptyDescLine2: "1. 已登入 Google 帳號",
+    emptyDescLine3: "2. 手機 / 平板 Chrome 已開啟同步",
+    emptyDescLine4: "3. 裝置上目前有開啟的分頁",
+    errorTitle: "讀取失敗",
+    loading: "讀取中"
+  },
+  en: {
+    headerEyebrow: "CHROME EXTENSION",
+    headerTitle: "Device Tabs",
+    devicesLabel: "DEVICES",
+    tabs: "tabs",
+    selectAll: "All",
+    deselectAll: "None",
+    openSelectedPrefix: "Open",
+    openSelectedSuffix: "tabs",
+    openInProgress: "Opening",
+    openSuccess: "Opened",
+    openFail: "Failed, please retry",
+    syncTimeMinutes: (n) => `${n} min`,
+    syncTimeHours: (n) => `${n} hr`,
+    syncTimeDays: (n) => `${n} d`,
+    syncTimeJustNow: "just now",
+    syncTimePattern: (time) => `Synced ${time} ago`,
+    emptyTitle: "No synced device tabs found",
+    emptyDescLine1: "Please check:",
+    emptyDescLine2: "1. Signed in to your Google account",
+    emptyDescLine3: "2. Chrome Sync enabled on your iPhone / iPad",
+    emptyDescLine4: "3. Tabs currently open on your device",
+    errorTitle: "Failed to load",
+    loading: "Loading"
+  }
+};
+
+function detectLang() {
+  if (langOverride) return langOverride;
+  const ui = (chrome.i18n.getUILanguage() || "en").toLowerCase();
+  if (ui.startsWith("zh")) return "zh_TW";
+  return "en";
+}
+
+function t(key, ...args) {
+  const lang = detectLang();
+  const dict = MESSAGES[lang] || MESSAGES.en;
+  const val = dict[key];
+  if (typeof val === "function") return val(...args);
+  return val ?? key;
+}
+
+function applyStaticI18n() {
+  document.querySelectorAll("[data-i18n]").forEach(el => {
+    const key = el.dataset.i18n;
+    const text = t(key);
+    if (text) el.textContent = text;
+  });
+  // Lang toggle shows the OTHER language label.
+  langToggle.textContent = detectLang() === "zh_TW" ? "EN" : "中";
+  langToggle.setAttribute("aria-label",
+    detectLang() === "zh_TW" ? "Switch to English" : "切換為中文");
+}
+
+// ---------- time formatting ----------
+
+function formatSyncTime(timestampMs) {
+  if (!timestampMs) return "";
+  const diffSec = Math.max(0, (Date.now() - timestampMs) / 1000);
+  let timeStr;
+  if (diffSec < 60) timeStr = t("syncTimeJustNow");
+  else if (diffSec < 3600) timeStr = t("syncTimeMinutes", Math.floor(diffSec / 60));
+  else if (diffSec < 86400) timeStr = t("syncTimeHours", Math.floor(diffSec / 3600));
+  else timeStr = t("syncTimeDays", Math.floor(diffSec / 86400));
+  return diffSec < 60 ? timeStr : t("syncTimePattern", timeStr);
+}
+
+// ---------- rendering ----------
+
+function deviceIconSvg(deviceName) {
+  const n = (deviceName || "").toLowerCase();
+  // Default = iPad (tablet rect); iPhone if name hints at phone.
+  if (n.includes("iphone") || n.includes("phone") || n.includes("android")) {
+    return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="7" y="2" width="10" height="20" rx="2"/><line x1="11" y1="18" x2="13" y2="18"/>
+    </svg>`;
+  }
+  return `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="11" y1="18.5" x2="13" y2="18.5"/>
+  </svg>`;
+}
+
+function isPhone(deviceName) {
+  const n = (deviceName || "").toLowerCase();
+  return n.includes("iphone") || n.includes("phone") || n.includes("android");
+}
+
+const checkSvg = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
+
+function escapeHtml(str) {
+  const d = document.createElement("div");
+  d.textContent = str ?? "";
+  return d.innerHTML;
+}
+
+function render() {
+  if (devices.length === 0) {
+    renderEmpty();
+    return;
+  }
+
+  content.innerHTML = "";
+
+  const label = document.createElement("div");
+  label.className = "section-label";
+  label.textContent = `${t("devicesLabel")} · ${devices.length}`;
+  content.appendChild(label);
+
+  devices.forEach((device) => {
+    const card = document.createElement("div");
+    card.className = "device-card";
+
+    const header = document.createElement("div");
+    header.className = "device-header";
+
+    const iconBox = document.createElement("div");
+    iconBox.className = "device-icon" + (isPhone(device.deviceName) ? " iphone" : "");
+    iconBox.innerHTML = deviceIconSvg(device.deviceName);
+    header.appendChild(iconBox);
+
+    const info = document.createElement("div");
+    info.className = "device-info";
+    const name = document.createElement("div");
+    name.className = "device-name";
+    name.textContent = device.deviceName || "—";
+    const meta = document.createElement("div");
+    meta.className = "device-meta";
+    const tabsWord = device.tabs.length === 1 ? t("tabs") : t("tabs");
+    const sync = formatSyncTime(device.modifiedTime);
+    meta.textContent = sync
+      ? `${sync} · ${device.tabs.length} ${tabsWord}`
+      : `${device.tabs.length} ${tabsWord}`;
+    info.appendChild(name);
+    info.appendChild(meta);
+    header.appendChild(info);
+
+    const selectBtn = document.createElement("button");
+    selectBtn.className = "select-toggle";
+    selectBtn.type = "button";
+    const allSelected = device.tabs.every(tab => selected.has(tab._id));
+    selectBtn.textContent = allSelected ? t("deselectAll") : t("selectAll");
+    selectBtn.addEventListener("click", () => {
+      if (allSelected) device.tabs.forEach(tab => selected.delete(tab._id));
+      else device.tabs.forEach(tab => selected.add(tab._id));
+      render();
+    });
+    header.appendChild(selectBtn);
+    card.appendChild(header);
+
+    const list = document.createElement("div");
+    list.className = "tab-list";
+
+    device.tabs.forEach((tab) => {
+      const item = document.createElement("div");
+      item.className = "tab-item" + (selected.has(tab._id) ? " checked" : "");
+      item.setAttribute("role", "checkbox");
+      item.setAttribute("aria-checked", selected.has(tab._id) ? "true" : "false");
+      item.setAttribute("tabindex", "0");
+
+      const box = document.createElement("div");
+      box.className = "tab-checkbox";
+      box.innerHTML = checkSvg;
+
+      const title = document.createElement("div");
+      title.className = "tab-title";
+      title.textContent = tab.title || tab.url;
+      title.title = tab.url;
+
+      item.appendChild(box);
+      item.appendChild(title);
+
+      const toggle = () => {
+        if (selected.has(tab._id)) selected.delete(tab._id);
+        else selected.add(tab._id);
+        render();
+      };
+      item.addEventListener("click", toggle);
+      item.addEventListener("keydown", (e) => {
+        if (e.key === " " || e.key === "Enter") {
+          e.preventDefault();
+          toggle();
+        }
+      });
+
+      list.appendChild(item);
+    });
+
+    card.appendChild(list);
+    content.appendChild(card);
+  });
+
+  updateFooter();
+}
+
+function renderEmpty() {
+  content.innerHTML = `
+    <div class="state">
+      <svg class="state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="6" width="18" height="14" rx="2"/>
+        <path d="M3 10h18"/>
+        <path d="M9 14h2"/>
+      </svg>
+      <div class="state-title">${escapeHtml(t("emptyTitle"))}</div>
+      <div class="state-desc">
+        ${escapeHtml(t("emptyDescLine1"))}<br>
+        ${escapeHtml(t("emptyDescLine2"))}<br>
+        ${escapeHtml(t("emptyDescLine3"))}<br>
+        ${escapeHtml(t("emptyDescLine4"))}
+      </div>
+    </div>
+  `;
+  footer.style.display = "none";
+}
+
+function renderError(err) {
+  content.innerHTML = `
+    <div class="state">
+      <svg class="state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <div class="state-title">${escapeHtml(t("errorTitle"))}</div>
+      <div class="state-desc">${escapeHtml(err.message || "")}</div>
+    </div>
+  `;
+  footer.style.display = "none";
+}
+
+function updateFooter() {
+  footer.style.display = "block";
+  const count = selected.size;
+  btnLabel.textContent = `${t("openSelectedPrefix")} ${count} ${t("openSelectedSuffix")}`;
+  btnOpen.disabled = count === 0;
+  btnOpen.classList.remove("success");
+}
+
+// ---------- data loading ----------
 
 async function loadDevices() {
   try {
     const response = await chrome.runtime.sendMessage({ action: "getDeviceTabs" });
-    allDevices = response.devices || [];
+    const raw = response?.devices || [];
 
-    if (allDevices.length === 0) {
-      showEmpty();
+    // Assign stable ids per tab + flatten into our shape.
+    let counter = 0;
+    devices = raw.map(d => ({
+      deviceName: d.deviceName,
+      modifiedTime: d.modifiedTime,
+      tabs: (d.tabs || []).map(tab => ({
+        _id: `t${counter++}`,
+        url: tab.url,
+        title: tab.title,
+        favIconUrl: tab.favIconUrl
+      }))
+    }));
+
+    // Default: nothing selected. User picks.
+    selected.clear();
+
+    render();
+  } catch (err) {
+    renderError(err);
+  }
+}
+
+// ---------- open action ----------
+
+async function openSelected() {
+  if (selected.size === 0) return;
+
+  const urls = [];
+  devices.forEach(d => d.tabs.forEach(tab => {
+    if (selected.has(tab._id)) urls.push(tab.url);
+  }));
+
+  btnOpen.disabled = true;
+  btnLabel.textContent = t("openInProgress");
+
+  try {
+    const result = await chrome.runtime.sendMessage({ action: "openTabs", urls });
+    if (result?.success) {
+      btnOpen.classList.add("success");
+      btnLabel.textContent = `${t("openSuccess")} ${result.count}`;
+      // Close popup shortly after success so the new window can come forward.
+      setTimeout(() => window.close(), 600);
     } else {
-      renderDevices(allDevices);
+      btnLabel.textContent = t("openFail");
+      btnOpen.disabled = false;
     }
   } catch (err) {
-    showError(err);
+    btnLabel.textContent = t("openFail");
+    btnOpen.disabled = false;
   }
 }
 
-function renderDevices(devices) {
-  content.innerHTML = '';
-  let totalCount = 0;
+// ---------- language toggle ----------
 
-  devices.forEach(device => {
-    totalCount += device.tabs.length;
-    const card = document.createElement('div');
-    card.className = 'device-card';
-
-    const icon = getDeviceIcon(device.deviceName);
-    const previewTabs = device.tabs.slice(0, 4);
-    const remaining = device.tabs.length - previewTabs.length;
-
-    // Header
-    const header = document.createElement('div');
-    header.className = 'device-header';
-
-    const openBtn = document.createElement('button');
-    openBtn.className = 'device-open-btn';
-    openBtn.textContent = `開啟全部`;
-
-    header.innerHTML = `
-      <span class="device-icon">${icon}</span>
-      <span class="device-name">${escapeHtml(device.deviceName)}</span>
-      <span class="device-count">${device.tabs.length} 個</span>
-    `;
-    header.appendChild(openBtn);
-    card.appendChild(header);
-
-    // Tab preview
-    const preview = document.createElement('div');
-    preview.className = 'tab-preview';
-
-    previewTabs.forEach(tab => {
-      const item = document.createElement('div');
-      item.className = 'tab-preview-item';
-      const hostname = getHostname(tab.url);
-      const faviconHtml = tab.favIconUrl
-        ? `<img src="${tab.favIconUrl}" onerror="this.textContent='🌐';this.style.display='none'">`
-        : '';
-      item.innerHTML = `${faviconHtml}<span>${escapeHtml(tab.title || hostname)}</span>`;
-      preview.appendChild(item);
-    });
-
-    if (remaining > 0) {
-      const more = document.createElement('div');
-      more.className = 'tab-preview-more';
-      more.textContent = `⋯ 還有 ${remaining} 個分頁`;
-      preview.appendChild(more);
-    }
-
-    card.appendChild(preview);
-    content.appendChild(card);
-
-    // 點擊開啟該裝置的所有分頁
-    openBtn.addEventListener('click', () => {
-      openDeviceTabs(device, openBtn);
-    });
-  });
-
-  // 多於一個裝置才顯示「開啟全部」
-  if (devices.length > 1) {
-    openAllSection.style.display = 'block';
-    btnOpenAll.textContent = `🚀 開啟全部 ${totalCount} 個分頁`;
-  }
+function toggleLang() {
+  const next = detectLang() === "zh_TW" ? "en" : "zh_TW";
+  langOverride = next;
+  chrome.storage?.local?.set({ langOverride: next });
+  applyStaticI18n();
+  render();
 }
 
-async function openDeviceTabs(device, btn) {
-  btn.disabled = true;
-  btn.textContent = '⏳ 開啟中...';
+// ---------- boot ----------
 
-  const urls = device.tabs.map(t => t.url);
-  const result = await chrome.runtime.sendMessage({ action: "openTabs", urls });
+async function init() {
+  // Load language override if set.
+  try {
+    const stored = await chrome.storage?.local?.get?.("langOverride");
+    if (stored && stored.langOverride) langOverride = stored.langOverride;
+  } catch (e) { /* ignore */ }
 
-  if (result && result.success) {
-    btn.textContent = `✓ 已開啟 ${result.count} 個`;
-    btn.classList.add('success');
-  } else {
-    btn.textContent = '失敗，請重試';
-    btn.disabled = false;
-  }
+  applyStaticI18n();
+
+  btnOpen.addEventListener("click", openSelected);
+  langToggle.addEventListener("click", toggleLang);
+
+  loadDevices();
 }
 
-// 開啟全部裝置分頁
-btnOpenAll.addEventListener('click', async () => {
-  btnOpenAll.disabled = true;
-  btnOpenAll.textContent = '⏳ 開啟中...';
-
-  const allUrls = allDevices.flatMap(d => d.tabs.map(t => t.url));
-  const result = await chrome.runtime.sendMessage({ action: "openTabs", urls: allUrls });
-
-  if (result && result.success) {
-    btnOpenAll.textContent = `✓ 已開啟 ${result.count} 個分頁！`;
-    btnOpenAll.classList.add('success');
-  } else {
-    btnOpenAll.textContent = '失敗，請重試';
-    btnOpenAll.disabled = false;
-  }
-});
-
-function showEmpty() {
-  content.innerHTML = `
-    <div class="empty-state">
-      <div class="empty-icon">📭</div>
-      <div class="empty-title">找不到裝置同步分頁</div>
-      <div class="empty-desc">
-        請確認：<br>
-        1. 已登入 Google 帳號<br>
-        2. 裝置已開啟 Chrome 同步<br>
-        3. 裝置上有開啟的分頁
-      </div>
-    </div>
-  `;
-}
-
-function showError(err) {
-  content.innerHTML = `
-    <div class="empty-state">
-      <div class="empty-icon">⚠️</div>
-      <div class="empty-title">讀取失敗</div>
-      <div class="empty-desc">${escapeHtml(err.message || '未知錯誤')}</div>
-    </div>
-  `;
-}
-
-function getDeviceIcon(name) {
-  const n = name.toLowerCase();
-  if (n.includes('iphone')) return '📱';
-  if (n.includes('ipad')) return '📟';
-  if (n.includes('mac')) return '💻';
-  if (n.includes('android')) return '🤖';
-  return '📱';
-}
-
-function getHostname(url) {
-  try { return new URL(url).hostname; } catch { return url; }
-}
-
-function escapeHtml(str) {
-  const d = document.createElement('div');
-  d.textContent = str || '';
-  return d.innerHTML;
-}
+document.addEventListener("DOMContentLoaded", init);

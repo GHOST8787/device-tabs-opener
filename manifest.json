@@ -1,15 +1,17 @@
 {
   "manifest_version": 3,
-  "name": "裝置分頁批次開啟器",
-  "version": "2.1.0",
-  "description": "一鍵批次開啟 iPhone/iPad 同步的分頁",
+  "name": "__MSG_extName__",
+  "version": "2.2.0",
+  "description": "__MSG_extDescription__",
+  "default_locale": "zh_TW",
   "permissions": [
     "sessions",
-    "tabs"
+    "tabs",
+    "storage"
   ],
   "action": {
     "default_popup": "popup.html",
-    "default_title": "裝置分頁批次開啟器",
+    "default_title": "__MSG_extName__",
     "default_icon": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",

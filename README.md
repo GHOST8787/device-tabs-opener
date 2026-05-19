@@ -4,7 +4,7 @@
 
 [![Chrome Web Store](https://img.shields.io/badge/Chrome%20Web%20Store-install-4285F4?logo=googlechrome&logoColor=white)](https://chromewebstore.google.com/detail/idmlpeiehifpmfbgpefcdjlbdchjmjpc)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-2.1.0-blue)](https://github.com/GHOST8787/device-tabs-opener)
+[![Version](https://img.shields.io/badge/version-2.2.0-blue)](https://github.com/GHOST8787/device-tabs-opener)
 
 一鍵批次開啟 iPhone / iPad 同步到 Chrome 的所有分頁。
 
@@ -16,8 +16,10 @@
 
 - 顯示所有已同步裝置及其分頁
 - 勾選想開啟的分頁，一鍵批次開啟
-- 全選 / 取消全選
+- 每個裝置可分別「全選 / 取消」
+- 顯示各裝置最後同步時間
 - 在新視窗中開啟所有選取的分頁
+- 中英文介面切換（自動跟隨瀏覽器語言，也可手動切換）
 
 ---
 
@@ -81,4 +83,5 @@ MIT License — 詳見 [LICENSE](LICENSE)
 
 ## 版本
 
-v2.1.0
+v2.2.0 — Sunset Coral palette · i18n (zh-TW / en) · per-device select toggle · sync time display
+v2.1.0 — Initial Chrome Web Store release

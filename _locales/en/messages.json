@@ -1,0 +1,105 @@
+{
+  "extName": {
+    "message": "Device Tabs Opener",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Select and batch-open tabs synced from your iPhone / iPad",
+    "description": "Extension description"
+  },
+  "headerEyebrow": {
+    "message": "CHROME EXTENSION"
+  },
+  "headerTitle": {
+    "message": "Device Tabs"
+  },
+  "devicesLabel": {
+    "message": "DEVICES"
+  },
+  "tabs": {
+    "message": "tabs"
+  },
+  "tabsSingular": {
+    "message": "tab"
+  },
+  "selectAll": {
+    "message": "All"
+  },
+  "deselectAll": {
+    "message": "None"
+  },
+  "openSelectedPrefix": {
+    "message": "Open"
+  },
+  "openSelectedSuffix": {
+    "message": "tabs"
+  },
+  "openNone": {
+    "message": "Select some tabs first"
+  },
+  "openInProgress": {
+    "message": "Opening"
+  },
+  "openSuccess": {
+    "message": "Opened"
+  },
+  "openFail": {
+    "message": "Failed, please retry"
+  },
+  "syncTime": {
+    "message": "Synced $TIME$ ago",
+    "placeholders": {
+      "time": {
+        "content": "$1"
+      }
+    }
+  },
+  "syncTimeMinutes": {
+    "message": "$N$ min",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "syncTimeHours": {
+    "message": "$N$ hr",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "syncTimeDays": {
+    "message": "$N$ d",
+    "placeholders": {
+      "n": {
+        "content": "$1"
+      }
+    }
+  },
+  "syncTimeJustNow": {
+    "message": "just now"
+  },
+  "emptyTitle": {
+    "message": "No synced device tabs found"
+  },
+  "emptyDescLine1": {
+    "message": "Please check:"
+  },
+  "emptyDescLine2": {
+    "message": "1. Signed in to your Google account"
+  },
+  "emptyDescLine3": {
+    "message": "2. Chrome Sync enabled on your iPhone / iPad"
+  },
+  "emptyDescLine4": {
+    "message": "3. Tabs currently open on your device"
+  },
+  "errorTitle": {
+    "message": "Failed to load"
+  },
+  "loading": {
+    "message": "Loading"
+  }
+}
